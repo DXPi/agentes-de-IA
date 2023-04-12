@@ -161,7 +161,7 @@ def print_assistant_thoughts(assistant_reply):
         call_stack = traceback.format_exc()
         print_to_console("Error: \n", Fore.RED, call_stack)
 
-
+# TODO: This function is not used in the current version of AutoGPT, please verify that and remove if necessary
 def load_variables(config_file="config.yaml"):
     """Load variables from yaml file if it exists, otherwise prompt the user for input"""
     try:
@@ -216,7 +216,7 @@ def load_variables(config_file="config.yaml"):
     return full_prompt
 
 
-def construct_prompt():
+def load_model_config():
     """Construct the prompt for the AI to respond to"""
     config = AIConfig.load()
     if config.ai_name:
@@ -226,10 +226,14 @@ def construct_prompt():
             f"Would you like me to return to being {config.ai_name}?",
             speak_text=True)
         should_continue = utils.clean_input(f"""Continue with the last settings?
-Name:  {config.ai_name}
-Role:  {config.ai_role}
-Goals: {config.ai_goals}
-Continue (y/n): """)
+            -- AI --
+            Name:  {config.ai_name}
+            Role:  {config.ai_role}
+            Goals: {config.ai_goals}
+            -- Tuning --
+            Temperature: {config.ai_temperature}
+            Tokens limit: {config.ai_token_limit}
+            Continue ([y]/n): """)
         if should_continue.lower() == "n":
             config = AIConfig()
 
@@ -241,8 +245,7 @@ Continue (y/n): """)
     global ai_name
     ai_name = config.ai_name
 
-    full_prompt = config.construct_full_prompt()
-    return full_prompt
+    return config
 
 
 def prompt_user():
@@ -279,6 +282,32 @@ def prompt_user():
     if ai_role == "":
         ai_role = "an AI designed to autonomously develop and run businesses with the sole goal of increasing your net worth."
 
+    # Fine tune the model
+    print_to_console(
+        "Would you like to tune the model?",
+        Fore.GREEN,
+        "You will be prompted model temperature and token limit. Enter nothing to load defaults.")
+    should_fine_tune = utils.clean_input("Fine tune (y/[n]): ")
+    if should_fine_tune.lower() == "y":
+        model_temperature = utils.clean_input(f"Temperature [{AIConfig.DEFAULT_PARAMETERS['ai_temperature']}]: ")
+        model_token_limit = utils.clean_input(f"Token limit [{AIConfig.DEFAULT_PARAMETERS['ai_token_limit']}]: ")
+
+        # Convert to float, -1 will be replaced with default in AIConfig constructor
+        if model_temperature == "":
+            model_temperature = -1
+        else:
+            model_temperature = float(model_temperature)
+        
+        # Convert to int, -1 will be replaced with default in AIConfig constructor
+        if model_token_limit == "":
+            model_token_limit = -1
+        else:
+            model_token_limit = int(model_token_limit)
+    else:
+        # will be replaced with defaults in AIConfig constructor
+        model_temperature = -1
+        model_token_limit = -1
+
     # Enter up to 5 goals for the AI
     print_to_console(
         "Enter up to 5 goals for your AI: ",
@@ -295,7 +324,7 @@ def prompt_user():
         ai_goals = ["Increase net worth", "Grow Twitter Account",
                     "Develop and manage multiple businesses autonomously"]
 
-    config = AIConfig(ai_name, ai_role, ai_goals)
+    config = AIConfig(ai_name, ai_role, ai_goals, model_temperature, model_token_limit)
     return config
 
 def parse_arguments():
@@ -337,6 +366,8 @@ def parse_arguments():
         print_to_console("Debug Mode: ", Fore.GREEN, "ENABLED")
         cfg.set_debug_mode(True)
 
+# print("Do you want to turn on automated mode? All AI commands would be authorized automatically. POTENTIALLY DANGEROUS, USE CAREFULLY")
+# automated_mode = utils.clean_input("Automated Mode (y/[n]): ")
 
 # TODO: fill in llm values here
 check_openai_api_key()
@@ -344,7 +375,8 @@ cfg = Config()
 logger = configure_logging()
 parse_arguments()
 ai_name = ""
-prompt = construct_prompt()
+config = load_model_config()
+prompt = config.construct_full_prompt()
 # print(prompt)
 # Initialize variables
 full_message_history = []
@@ -367,7 +399,7 @@ while True:
             user_input,
             full_message_history,
             memory,
-            cfg.fast_token_limit) # TODO: This hardcodes the model to use GPT3.5. Make this an argument
+            config)
 
     # Print Assistant thoughts
     print_assistant_thoughts(assistant_reply)
