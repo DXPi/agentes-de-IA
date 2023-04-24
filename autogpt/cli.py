@@ -170,6 +170,7 @@ def main(
         command_registry.import_commands("autogpt.commands.twitter")
         command_registry.import_commands("autogpt.commands.web_selenium")
         command_registry.import_commands("autogpt.commands.write_tests")
+        command_registry.import_commands("autogpt.commands.times")
         command_registry.import_commands("autogpt.app")
 
         ai_name = ""
