@@ -7,13 +7,13 @@ from tests.integration.challenges.utils import get_level_to_run
 from tests.utils import requires_api_key
 
 LEVEL_CURRENTLY_BEATEN = 3  # real level beaten 30 and maybe more, but we can't record it, the cassette is too big
-MAX_LEVEL = 3
+MAX_LEVEL = 20
 
 
 @pytest.mark.vcr
 @requires_api_key("OPENAI_API_KEY")
 def test_memory_challenge_a(
-    memory_management_agent: Agent, user_selected_level: int
+    memory_management_agent: Agent, user_selected_level: int, mock_input
 ) -> None:
     """
     The agent reads a file containing a task_id. Then, it reads a series of other files.
@@ -29,13 +29,17 @@ def test_memory_challenge_a(
     task_id = "2314"
     create_instructions_files(memory_management_agent, num_files, task_id)
 
+    mock_input.side_effect = ["y"] * (num_files + 2) + ["n"]
+
     try:
-        run_interaction_loop(memory_management_agent, 180)
+        run_interaction_loop(memory_management_agent, 280)
     # catch system exit exceptions
     except SystemExit:
         file_path = str(memory_management_agent.workspace.get_path("output.txt"))
         content = read_file(file_path)
         assert task_id in content, f"Expected the file to contain {task_id}"
+        return
+    assert False, "Failed to shut down on its own"
 
 
 def create_instructions_files(
@@ -77,4 +81,4 @@ def generate_content(
         )
     if index != num_files:
         return f"Read the file {base_filename}{index + 1}.txt"
-    return "Write the task_id into the file output.txt\nShutdown"
+    return "Write the task_id into the file output.txt\nAfter that Shutdown"
