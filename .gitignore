@@ -7,6 +7,8 @@ autogpt/auto_gpt_workspace
 package-lock.json
 *.pyc
 auto_gpt_workspace/*
+annoy_index/*
+*.ann
 *.mpeg
 .env
 azure.yaml

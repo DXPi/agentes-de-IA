@@ -34,6 +34,12 @@ try:
 except ImportError:
     MilvusMemory = None
 
+try:
+    from autogpt.memory.annoy import AnnoyMemory
+except ImportError:
+    # print("Annoy not installed. Skipping import.")
+    AnnoyMemory = None
+
 
 def get_memory(cfg, init=False):
     memory = None
@@ -71,6 +77,14 @@ def get_memory(cfg, init=False):
             )
         else:
             memory = MilvusMemory(cfg)
+    elif cfg.memory_backend == "annoy":
+        if not AnnoyMemory:
+            print(
+                "Error: Annoy is not installed."
+                "Please install annoy to use Annoy as memory backend."
+            )
+        else:
+            memory = AnnoyMemory(cfg)
     elif cfg.memory_backend == "no_memory":
         memory = NoMemory(cfg)
 
