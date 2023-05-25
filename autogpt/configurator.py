@@ -27,6 +27,10 @@ def create_config(
     browser_name: str,
     allow_downloads: bool,
     skip_news: bool,
+    global_kill_switch: str,
+    global_kill_switch_canary: str,
+    local_kill_switch: str,
+    local_kill_switch_canary: str,
 ) -> None:
     """Updates the config object with the given arguments.
 
@@ -44,6 +48,10 @@ def create_config(
         browser_name (str): The name of the browser to use when using selenium to scrape the web
         allow_downloads (bool): Whether to allow Auto-GPT to download files natively
         skips_news (bool): Whether to suppress the output of latest news on startup
+        global_kill_switch (str): The URL to check for the global kill switch canary
+        global_kill_switch_canary (str): The string to check for on the global kill switch web page
+        local_kill_switch (str): The URL to check for the local kill switch canary
+        local_kill_switch_canary (str): The string to check for on the local kill switch web page
     """
     CFG.set_debug_mode(False)
     CFG.set_continuous_mode(False)
@@ -64,6 +72,18 @@ def create_config(
             " cause your AI to run forever or carry out actions you would not usually"
             " authorise. Use at your own risk.",
         )
+        # Provide an extra warning when continuous mode is used unlimited with no kill switch
+        if (
+            not continuous_limit
+            and not global_kill_switch
+            and not local_kill_switch
+        ):
+            logger.typewriter_log(
+                "WARNING: ",
+                Fore.RED,
+                "Continuous mode is being launched without a kill switch.",
+            )
+
         CFG.set_continuous_mode(True)
 
         if continuous_limit:
@@ -104,6 +124,15 @@ def create_config(
     if skip_reprompt:
         logger.typewriter_log("Skip Re-prompt: ", Fore.GREEN, "ENABLED")
         CFG.skip_reprompt = True
+
+    if global_kill_switch:
+        CFG.global_kill_switch = global_kill_switch
+    if global_kill_switch_canary:
+        CFG.global_kill_switch_canary = global_kill_switch_canary
+    if local_kill_switch:
+        CFG.local_kill_switch = local_kill_switch
+    if local_kill_switch_canary:
+        CFG.local_kill_switch_canary = local_kill_switch_canary
 
     if ai_settings_file:
         file = ai_settings_file

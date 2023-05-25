@@ -6,6 +6,10 @@ from colorama import Fore, Style
 
 from autogpt.app import execute_command, get_command
 from autogpt.config import Config
+from autogpt.json_fixes.bracket_termination import (
+    attempt_to_fix_json_by_finding_outermost_brackets,
+)
+from autogpt.kill_switch import check_kill_switch
 from autogpt.json_utils.json_fix_llm import fix_json_using_multiple_techniques
 from autogpt.json_utils.utilities import LLM_DEFAULT_RESPONSE_FORMAT, validate_json
 from autogpt.llm import chat_with_ai, create_chat_completion, create_chat_message
@@ -108,6 +112,39 @@ class Agent:
 
         while True:
             # Discontinue if continuous limit is reached
+            loop_count += 1
+            if cfg.continuous_mode:
+                if cfg.continuous_limit > 0 and loop_count > cfg.continuous_limit:
+                    logger.typewriter_log(
+                        "Continuous Limit Reached: ",
+                        Fore.YELLOW,
+                        f"{cfg.continuous_limit}",
+                    )
+                    break
+
+                if cfg.global_kill_switch:
+                    kill_switch, kill_switch_reason = check_kill_switch(
+                        cfg.global_kill_switch, cfg.global_kill_switch_canary
+                    )
+                    if kill_switch:
+                        logger.typewriter_log(
+                            "Global Kill Switch Halted Execution",
+                            Fore.RED,
+                            f"{kill_switch_reason}",
+                        )
+                        break
+
+                if cfg.local_kill_switch:
+                    kill_switch, kill_switch_reason = check_kill_switch(
+                        cfg.local_kill_switch, cfg.local_kill_switch_canary
+                    )
+                    if kill_switch:
+                        logger.typewriter_log(
+                            "Local Kill Switch Halted Execution",
+                            Fore.RED,
+                            f"{kill_switch_reason}",
+                        )
+                        break
             self.cycle_count += 1
             self.log_cycle_handler.log_count_within_cycle = 0
             self.log_cycle_handler.log_cycle(
@@ -126,6 +163,7 @@ class Agent:
                     "Continuous Limit Reached: ", Fore.YELLOW, f"{cfg.continuous_limit}"
                 )
                 break
+
             # Send message to AI, get response
             with Spinner("Thinking... "):
                 assistant_reply = chat_with_ai(

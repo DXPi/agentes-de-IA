@@ -53,6 +53,26 @@ import click
     help="Specifies whether to suppress the output of latest news on startup.",
 )
 @click.option(
+    "--global-kill-switch",
+    type=str,
+    help="The URL to check for the global kill switch canary.",
+)
+@click.option(
+    "--global-kill-switch-canary",
+    type=str,
+    help="The string to check for on the global kill switch web page.",
+)
+@click.option(
+    "--local-kill-switch",
+    type=str,
+    help="The URL to check for the local kill switch canary.",
+)
+@click.option(
+    "--local-kill-switch-canary",
+    type=str,
+    help="The string to check for on the local kill switch web page.",
+)
+@click.option(
     # TODO: this is a hidden option for now, necessary for integration testing.
     #   We should make this public once we're ready to roll out agent specific workspaces.
     "--workspace-directory",
@@ -81,6 +101,10 @@ def main(
     browser_name: str,
     allow_downloads: bool,
     skip_news: bool,
+    global_kill_switch: str,
+    global_kill_switch_canary: str,
+    local_kill_switch: str,
+    local_kill_switch_canary: str,
     workspace_directory: str,
     install_plugin_deps: bool,
 ) -> None:
@@ -107,6 +131,10 @@ def main(
             browser_name,
             allow_downloads,
             skip_news,
+            global_kill_switch,
+            global_kill_switch_canary,
+            local_kill_switch,
+            local_kill_switch_canary,
             workspace_directory,
             install_plugin_deps,
         )
