@@ -11,6 +11,7 @@ to the value that you want:
 * `redis` will use the redis cache that you configured
 * `milvus` will use the milvus cache that you configured
 * `weaviate` will use the weaviate cache that you configured
+* `llama_index` will use the LlamaIndex cache that you configured
 
 ## Memory Backend Setup
 
@@ -20,6 +21,7 @@ Links to memory backends
 - [Milvus](https://milvus.io/) &ndash; [self-hosted](https://milvus.io/docs), or managed with [Zilliz Cloud](https://zilliz.com/)
 - [Redis](https://redis.io)
 - [Weaviate](https://weaviate.io)
+- [LlamaIndex](https://github.com/jerryjliu/llama_index)
 
 ### Redis Setup
 
@@ -141,6 +143,26 @@ WEAVIATE_EMBEDDED_PATH="/home/me/.local/share/weaviate" # this is optional and i
 USE_WEAVIATE_EMBEDDED=False # set to True to run Embedded Weaviate
 MEMORY_INDEX="Autogpt" # name of the index to create for the application
 ```
+
+### 🦙 LlamaIndex Setup
+
+[LlamaIndex](https://gpt-index.readthedocs.io/en/latest/) is an open-source
+tool that provides an interface between data and LLM's. At its core,
+it provides a set of data structures (indices and graphs) that can model the data
+in various ways.
+
+Querying an index/graph will both retrieve the set of relevant
+data from the knowledge corpus as well as (optionally) synthesize
+the final answer.
+
+**Simple Setup**
+- Specify `LLAMA_INDEX_STRUCT_TYPE` to "simple_dict" (see [here](https://gpt-index.readthedocs.io/en/latest/reference/indices/composability_query.html#gpt_index.data_structs.struct_type.IndexStructType) for a full description of all structure types). 
+- Set `MEMORY_BACKEND` to "llama_index"
+
+**Advanced Setup**
+
+- If your index is already saved in disk, specify `LLAMAINDEX_JSON_PATH`.
+- If you want to specify query arguments, serialize them to a dictionary in JSON and load via `LLAMA_QUERY_KWARGS_PATH`
 
 ## View Memory Usage
 

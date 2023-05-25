@@ -121,6 +121,11 @@ class Config(metaclass=Singleton):
         self.milvus_collection = os.getenv("MILVUS_COLLECTION", "autogpt")
         self.milvus_secure = os.getenv("MILVUS_SECURE") == "True"
 
+        # llamaindex configuration
+        self.llamaindex_json_path = os.getenv("LLAMAINDEX_JSON_PATH")
+        self.llamaindex_struct_type = os.getenv("LLAMAINDEX_STRUCT_TYPE")
+        self.llamaindex_query_kwargs_path = os.getenv("LLAMA_QUERY_KWARGS_PATH")
+
         self.image_provider = os.getenv("IMAGE_PROVIDER")
         self.image_size = int(os.getenv("IMAGE_SIZE", 256))
         self.huggingface_api_token = os.getenv("HUGGINGFACE_API_TOKEN")
