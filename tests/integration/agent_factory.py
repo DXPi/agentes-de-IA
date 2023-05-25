@@ -50,7 +50,7 @@ def browser_agent(agent_test_config, memory_none: NoMemory, workspace: Workspace
     ai_config = AIConfig(
         ai_name="browse_website-GPT",
         ai_role="an AI designed to use the browse_website command to visit http://books.toscrape.com/catalogue/meditations_33/index.html, answer the question 'What is the price of the book?' and write the price to a file named \"browse_website.txt\", and use the task_complete command to complete the task.",
-        ai_goals=[
+        ai_goals= [
             "Use the browse_website command to visit http://books.toscrape.com/catalogue/meditations_33/index.html and answer the question 'What is the price of the book?'",
             'Write the price of the book to a file named "browse_website.txt".',
             "Use the task_complete command to complete the task.",
@@ -163,7 +163,7 @@ def get_company_revenue_agent(
         ai_name="Get-CompanyRevenue",
         ai_role="an autonomous agent that specializes in finding the reported revenue of a company.",
         ai_goals=[
-            "Write the revenue of Tesla in 2022 to a file. You should write the number without commas and you should not use signs like B for billion and M for million.",
+            "What was the revenue of Tesla in 2022? You should write the number without commas and you should not use signs like B for billion and M for million. Write the answer to this question in a file called output.txt.",
         ],
     )
     ai_config.command_registry = command_registry
@@ -186,7 +186,7 @@ def get_company_revenue_agent(
 
 
 @pytest.fixture
-def kubernetes_agent(memory_local_cache, workspace: Workspace):
+def kubernetes_agent(agent_test_config, memory_local_cache, workspace: Workspace):
     command_registry = CommandRegistry()
     command_registry.import_commands("autogpt.commands.file_operations")
     command_registry.import_commands("autogpt.app")
@@ -205,6 +205,74 @@ def kubernetes_agent(memory_local_cache, workspace: Workspace):
     Config().set_continuous_mode(False)
     agent = Agent(
         ai_name="Kubernetes-Demo",
+        memory=memory_local_cache,
+        full_message_history=[],
+        command_registry=command_registry,
+        config=ai_config,
+        next_action_count=0,
+        system_prompt=system_prompt,
+        triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
+        workspace_directory=workspace.root,
+    )
+
+    return agent
+
+
+@pytest.fixture
+def anthropic_information_agent(
+    agent_test_config, memory_local_cache, workspace: Workspace
+):
+    command_registry = CommandRegistry()
+    command_registry.import_commands("autogpt.commands.file_operations")
+    command_registry.import_commands("autogpt.app")
+
+    ai_config = AIConfig(
+        ai_name="Anthropic-Information",
+        ai_role="an autonomous agent that specializes in researching about Anthropic's new LLM.",
+        ai_goals=[
+            "How many tokens fit in the Anthropic's Claude LLM which was announced in Q2 2023? Write the answer to this question in a file called output.txt",
+        ],
+    )
+    ai_config.command_registry = command_registry
+
+    system_prompt = ai_config.construct_full_prompt()
+    Config().set_continuous_mode(False)
+    agent = Agent(
+        ai_name="Anthropic-Demo",
+        memory=memory_local_cache,
+        full_message_history=[],
+        command_registry=command_registry,
+        config=ai_config,
+        next_action_count=0,
+        system_prompt=system_prompt,
+        triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
+        workspace_directory=workspace.root,
+    )
+
+    return agent
+
+
+@pytest.fixture
+def autogpt_information_agent(
+    agent_test_config, memory_local_cache, workspace: Workspace
+):
+    command_registry = CommandRegistry()
+    command_registry.import_commands("autogpt.commands.file_operations")
+    command_registry.import_commands("autogpt.app")
+
+    ai_config = AIConfig(
+        ai_name="AutoGPT-Information",
+        ai_role="an autonomous agent that specializes in researching.",
+        ai_goals=[
+            "What is the name of the founder of AutoGPT (https://en.wikipedia.org/wiki/Auto-GPT)? Write the answer to this question in a file called output.txt.",
+        ],
+    )
+    ai_config.command_registry = command_registry
+
+    system_prompt = ai_config.construct_full_prompt()
+    Config().set_continuous_mode(False)
+    agent = Agent(
+        ai_name="AutoGPT-Demo",
         memory=memory_local_cache,
         full_message_history=[],
         command_registry=command_registry,
