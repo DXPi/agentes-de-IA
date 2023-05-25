@@ -45,8 +45,6 @@ def get_memory(cfg, init=False):
             )
         else:
             memory = PineconeMemory(cfg)
-            if init:
-                memory.clear()
     elif cfg.memory_backend == "redis":
         if not RedisMemory:
             logger.warn(

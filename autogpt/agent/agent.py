@@ -19,6 +19,7 @@ from autogpt.log_cycle.log_cycle import (
     LogCycleHandler,
 )
 from autogpt.logs import logger, print_assistant_thoughts
+from autogpt.memory.pinecone import PineconeMemory
 from autogpt.speech import say_text
 from autogpt.spinner import Spinner
 from autogpt.utils import clean_input
@@ -298,6 +299,29 @@ class Agent:
                     result = plugin.post_command(command_name, result)
                 if self.next_action_count > 0:
                     self.next_action_count -= 1
+                    
+            if command_name != "do_nothing":
+                if isinstance(self.memory, PineconeMemory):
+                    stats = self.memory.get_stats()
+                    index_fullness = stats.index_fullness
+                    if index_fullness == 1:
+                        should_clear = clean_input(
+                            f"""Your Pinecone index is {Fore.RED}100% full{Style.RESET_ALL}.
+                                No new data can be stored.
+                                Clear index? (y/n):"""
+                        )
+                        if should_clear.lower() == "y":
+                            self.memory.clear
+                        else:
+                            pass
+                            
+                memory_to_add = (
+                        f"Assistant Reply: {assistant_reply} "
+                        f"\nResult: {result} "
+                        f"\nHuman Feedback: {user_input} "
+                )
+            
+            self.memory.add(memory_to_add)
 
             # Check if there's a result from the command append it to the message
             # history

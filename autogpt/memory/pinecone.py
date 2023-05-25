@@ -4,6 +4,7 @@ from colorama import Fore, Style
 from autogpt.llm import get_ada_embedding
 from autogpt.logs import logger
 from autogpt.memory.base import MemoryProviderSingleton
+from autogpt.utils import clean_input
 
 
 class PineconeMemory(MemoryProviderSingleton):
@@ -15,11 +16,6 @@ class PineconeMemory(MemoryProviderSingleton):
         metric = "cosine"
         pod_type = "p1"
         table_name = "auto-gpt"
-        # this assumes we don't start with memory.
-        # for now this works.
-        # we'll need a more complicated and robust system if we want to start with
-        #  memory.
-        self.vec_num = 0
 
         try:
             pinecone.whoami()
@@ -45,6 +41,40 @@ class PineconeMemory(MemoryProviderSingleton):
                 table_name, dimension=dimension, metric=metric, pod_type=pod_type
             )
         self.index = pinecone.Index(table_name)
+        # gets stats for index pod, extracts index_fullness, converts to percentage.
+        # prompts user to clear or not based on preference; extracts vector count
+        # and assigns it to self.vec_num
+        # index fullness percentage and vector count are displayed in prompt
+        index_stats = self.index.describe_index_stats()
+        namespaces = index_stats.get("namespaces", {})
+        default_namespace = namespaces.get("", {})
+        self.vec_num = default_namespace.get("vector_count", None)
+        if self.vec_num == None:
+            self.vec_num = "0"
+        index_fullness = index_stats.index_fullness * 100
+
+        if index_fullness == 90:
+            fullness_percent = f"{Fore.YELLOW}{index_fullness}%{Style.RESET_ALL}"
+        elif index_fullness < 10:
+            fullness_percent = f"{Fore.GREEN}<10%{Style.RESET_ALL}"
+        else:
+            fullness_percent = f"{Fore.GREEN}{index_fullness}%{Style.RESET_ALL}"
+
+        should_clear = clean_input(
+            f"""{Fore.CYAN}Memory storage:{Style.RESET_ALL} Your Pinecone index pod is currently at 
+                {fullness_percent} of capacity, with {self.vec_num} vector(s). Clear the index?
+                {Fore.MAGENTA}(y/n): {Style.RESET_ALL}"""
+        )
+
+        if should_clear.lower() == "y":
+            self.index.delete(delete_all=True)
+            print(
+                f"""
+{Fore.GREEN}Pinecone index cleared.{Style.RESET_ALL}"""
+            )
+            return None
+        elif should_clear.lower() == "n":
+            pass
 
     def add(self, data):
         vector = get_ada_embedding(data)
