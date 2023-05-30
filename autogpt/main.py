@@ -1,4 +1,3 @@
-"""The application entry point.  Can be invoked by a CLI or any other front end application."""
 import logging
 import sys
 from pathlib import Path
@@ -6,7 +5,8 @@ from pathlib import Path
 from colorama import Fore, Style
 
 from autogpt.agent import Agent
-from autogpt.commands.command import CommandRegistry
+from autogpt.workspace import Workspace
+from autogpt.commands.command import CommandRegistry, command
 from autogpt.config import Config, check_openai_api_key
 from autogpt.configurator import create_config
 from autogpt.logs import logger
@@ -19,8 +19,13 @@ from autogpt.utils import (
     get_legal_warning,
     markdown_to_ansi_style,
 )
-from autogpt.workspace import Workspace
 from scripts.install_plugin_deps import install_plugin_dependencies
+import os
+from dotenv import load_dotenv
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from autogpt.commands.code_generator import CodeGenerator
+
+load_dotenv()
 
 
 def run_auto_gpt(
@@ -141,6 +146,10 @@ def run_auto_gpt(
         "autogpt.commands.write_tests",
         "autogpt.app",
         "autogpt.commands.task_statuses",
+        "generate_code_signature",   # Command for generating code from function signature
+        "generate_code_comment",     # Command for generating code from comment
+        "generate_code_docstring",   # Command for generating code from docstring
+        "generate_code_fill_in",     # Command for generating code from fill in the middle prompt
     ]
     logger.debug(
         f"The following command categories are disabled: {cfg.disabled_command_categories}"
@@ -192,3 +201,23 @@ def run_auto_gpt(
         workspace_directory=workspace_directory,
     )
     agent.start_interaction_loop()
+
+
+if __name__ == "__main__":
+    run_auto_gpt(
+        continuous=False,
+        continuous_limit=1,
+        ai_settings="",
+        prompt_settings="",
+        skip_reprompt=False,
+        speak=False,
+        debug=False,
+        gpt3only=False,
+        gpt4only=False,
+        memory_type="",
+        browser_name="",
+        allow_downloads=False,
+        skip_news=False,
+        workspace_directory=None,
+        install_plugin_deps=False,
+    )
