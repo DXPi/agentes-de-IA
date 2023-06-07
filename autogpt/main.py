@@ -6,6 +6,7 @@ from pathlib import Path
 from colorama import Fore, Style
 
 from autogpt.agent import Agent
+from autogpt.aim import AimCallback
 from autogpt.commands.command import CommandRegistry
 from autogpt.config import Config, check_openai_api_key
 from autogpt.configurator import create_config
@@ -54,6 +55,7 @@ def run_auto_gpt(
     skip_news: bool,
     workspace_directory: str,
     install_plugin_deps: bool,
+    aim_repo: str,
 ):
     # Configure logging before we do anything else.
     logger.set_level(logging.DEBUG if debug else logging.INFO)
@@ -79,6 +81,9 @@ def run_auto_gpt(
         allow_downloads,
         skip_news,
     )
+
+    aim_callback = AimCallback(aim_repo)
+    aim_callback.setup({"cfg": cfg})
 
     if cfg.continuous_mode:
         for line in get_legal_warning().split("\n"):
@@ -193,5 +198,6 @@ def run_auto_gpt(
         system_prompt=system_prompt,
         triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
         workspace_directory=workspace_directory,
+        aim_callback=aim_callback,
     )
     agent.start_interaction_loop()

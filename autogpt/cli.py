@@ -65,6 +65,7 @@ import click
     is_flag=True,
     help="Installs external dependencies for 3rd party plugins.",
 )
+@click.option("--aim-repo", type=str, help="Aim repository path")
 @click.pass_context
 def main(
     ctx: click.Context,
@@ -83,6 +84,7 @@ def main(
     skip_news: bool,
     workspace_directory: str,
     install_plugin_deps: bool,
+    aim_repo: str,
 ) -> None:
     """
     Welcome to AutoGPT an experimental open-source application showcasing the capabilities of the GPT-4 pushing the boundaries of AI.
@@ -109,6 +111,7 @@ def main(
             skip_news,
             workspace_directory,
             install_plugin_deps,
+            aim_repo,
         )
 
 

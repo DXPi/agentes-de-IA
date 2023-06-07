@@ -4,6 +4,7 @@ from datetime import datetime
 
 from colorama import Fore, Style
 
+from autogpt.aim import AimCallback
 from autogpt.app import execute_command, get_command
 from autogpt.commands.command import CommandRegistry
 from autogpt.config import Config
@@ -54,6 +55,8 @@ class Agent:
             CONTEXTUAL INFORMATION (memory, previous conversations, anything relevant)
             TRIGGERING PROMPT
 
+        aim_callback: The Aim callback that tracks input prompts and agent replies.
+
         The triggering prompt reminds the AI about its short term meta task
         (defining the next task)
     """
@@ -68,6 +71,7 @@ class Agent:
         system_prompt: str,
         triggering_prompt: str,
         workspace_directory: str,
+        aim_callback: AimCallback = None,
     ):
         cfg = Config()
         self.ai_name = ai_name
@@ -82,6 +86,7 @@ class Agent:
         self.created_at = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.cycle_count = 0
         self.log_cycle_handler = LogCycleHandler()
+        self.aim_callback = aim_callback
 
     def start_interaction_loop(self):
         # Interaction Loop
@@ -90,6 +95,12 @@ class Agent:
         command_name = None
         arguments = None
         user_input = ""
+
+        if self.aim_callback:
+            self.aim_callback.track_text(self.system_prompt, name="system_prompt")
+            self.aim_callback.track_text(
+                self.triggering_prompt, name="triggering_prompt"
+            )
 
         # Signal handler for interrupting y -N
         def signal_handler(signum, frame):
@@ -134,6 +145,13 @@ class Agent:
                     self.triggering_prompt,
                     cfg.fast_token_limit,
                     cfg.fast_llm_model,
+                )
+
+            if self.aim_callback:
+                self.aim_callback.track_text(
+                    assistant_reply,
+                    name="assistant_reply",
+                    context={"cycle_count": self.cycle_count},
                 )
 
             assistant_reply_json = fix_json_using_multiple_techniques(assistant_reply)
