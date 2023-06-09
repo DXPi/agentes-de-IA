@@ -124,6 +124,13 @@ def scrape_text_with_selenium(url: str, config: Config) -> tuple[WebDriver, str]
             options.add_argument("--headless=new")
             options.add_argument("--disable-gpu")
 
+        if CFG.selenium_chrome_ignore_errors:
+            options.add_argument("--ignore-certificate-errors")
+            options.add_experimental_option('excludeSwitches', ['enable-logging'])
+
+        if CFG.selenium_chrome_user_data_dir != "":
+            options.add_argument(f"--user-data-dir={CFG.selenium_chrome_user_data_dir}")
+
         chromium_driver_path = Path("/usr/bin/chromedriver")
 
         driver = ChromeDriver(
