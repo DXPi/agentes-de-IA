@@ -1,11 +1,9 @@
 """ElevenLabs speech module"""
-import os
-
 import requests
-from playsound import playsound
 
 from autogpt.config.config import Config
 from autogpt.speech.base import VoiceBase
+from autogpt.speech.playback import play_audio
 
 PLACEHOLDERS = {"your-voice-id"}
 
@@ -77,10 +75,7 @@ class ElevenLabsSpeech(VoiceBase):
         response = requests.post(tts_url, headers=self._headers, json={"text": text})
 
         if response.status_code == 200:
-            with open("speech.mpeg", "wb") as f:
-                f.write(response.content)
-            playsound("speech.mpeg", True)
-            os.remove("speech.mpeg")
+            play_audio(response.content)
             return True
         else:
             logger.warn("Request failed with status code:", response.status_code)
