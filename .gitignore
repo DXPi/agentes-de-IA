@@ -15,6 +15,7 @@ log-ingestion.txt
 logs
 *.log
 *.mp3
+*.wav
 mem.sqlite3
 venvAutoGPT
 
