@@ -92,6 +92,8 @@ class Config(metaclass=Singleton):
 
         self.use_mac_os_tts = False
         self.use_mac_os_tts = os.getenv("USE_MAC_OS_TTS")
+        self.macos_voice_1 = os.getenv("MACOS_VOICE_1")
+        self.macos_voice_2 = os.getenv("MACOS_VOICE_2")
 
         self.chat_messages_enabled = os.getenv("CHAT_MESSAGES_ENABLED") == "True"
 
