@@ -105,6 +105,11 @@ def google_official_search(
             "message", ""
         ):
             return "Error: The provided Google API key is invalid or missing."
+        # Handle other types of errors
+        elif error_details.get("error", {}).get(
+            "message", ""
+        ):
+            return f"Error: {error_details['error']['message']}"
         else:
             return f"Error: {e}"
     # google_result can be a list or a string depending on the search results
