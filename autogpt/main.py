@@ -2,17 +2,19 @@
 import logging
 import sys
 from pathlib import Path
+from typing import Optional
 
 from colorama import Fore, Style
 
 from autogpt.agent import Agent
 from autogpt.config import Config, check_openai_api_key
+from autogpt.config.ai_config import AIConfig
 from autogpt.configurator import create_config
 from autogpt.logs import logger
 from autogpt.memory.vector import get_memory
 from autogpt.models.command_registry import CommandRegistry
 from autogpt.plugins import scan_plugins
-from autogpt.prompts.prompt import DEFAULT_TRIGGERING_PROMPT, construct_main_ai_config
+from autogpt.prompts.prompt import DEFAULT_TRIGGERING_PROMPT, main_menu, start_prompt
 from autogpt.utils import (
     get_current_git_branch,
     get_latest_bulletin,
@@ -46,9 +48,9 @@ def run_auto_gpt(
     browser_name: str,
     allow_downloads: bool,
     skip_news: bool,
-    workspace_directory: str,
+    workspace_directory: Optional[Path],
     install_plugin_deps: bool,
-):
+) -> None:
     # Configure logging before we do anything else.
     logger.set_level(logging.DEBUG if debug else logging.INFO)
     logger.speak_mode = speak
@@ -125,8 +127,19 @@ def run_auto_gpt(
     workspace_directory = Workspace.make_workspace(workspace_directory)
     config.workspace_path = str(workspace_directory)
 
+    # Set the complete path for the ai_settings file
+    config.ai_settings_filepath = str(
+        Path(__file__).resolve().parent.parent / config.ai_settings_file
+    )
+
+    config.set_ai_settings_filepath(config.ai_settings_filepath)
+
     # HACK: doing this here to collect some globals that depend on the workspace.
-    file_logger_path = workspace_directory / "file_logger.txt"
+    if workspace_directory is not None:
+        file_logger_path = workspace_directory / "file_logger.txt"
+    else:
+        raise ValueError("workspace_directory must be defined")
+
     if not file_logger_path.exists():
         with file_logger_path.open(mode="w", encoding="utf-8") as f:
             f.write("File Operation Logger ")
@@ -134,6 +147,7 @@ def run_auto_gpt(
     config.file_logger_path = str(file_logger_path)
 
     config.set_plugins(scan_plugins(config, config.debug_mode))
+
     # Create a CommandRegistry instance and scan default folder
     command_registry = CommandRegistry()
 
@@ -152,10 +166,11 @@ def run_auto_gpt(
         command_registry.import_commands(command_category)
 
     ai_name = ""
-    ai_config = construct_main_ai_config(config)
+    ai_config = main_menu(config)
     ai_config.command_registry = command_registry
     if ai_config.ai_name:
         ai_name = ai_config.ai_name
+    start_prompt(config, ai_config)
     # print(prompt)
     # Initialize variables
     next_action_count = 0
@@ -184,6 +199,50 @@ def run_auto_gpt(
         memory=memory,
         next_action_count=next_action_count,
         command_registry=command_registry,
+        system_prompt=system_prompt,
+        triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
+        workspace_directory=workspace_directory,
+        ai_config=ai_config,
+        config=config,
+    )
+    agent.start_interaction_loop()
+
+
+def start_agent_directly(ai_config: AIConfig, config: Config) -> None:
+    if ai_config.ai_name:
+        ai_name = ai_config.ai_name
+
+    # Initialize variables
+    next_action_count = 0
+
+    # TODO: have this directory live outside the repository (e.g. in a user's
+    #   home directory) and have it come in as a command line argument or part of
+    #   the env file.
+    workspace_directory = Path(__file__).parent / "auto_gpt_workspace"
+
+    # add chat plugins capable of report to logger
+    if config.chat_messages_enabled:
+        for plugin in config.plugins:
+            if hasattr(plugin, "can_handle_report") and plugin.can_handle_report():
+                logger.info(f"Loaded plugin into logger: {plugin.__class__.__name__}")
+                logger.chat_plugins.append(plugin)
+
+    # Initialize memory and make sure it is empty.
+    memory = get_memory(config)
+    memory.clear()
+    logger.typewriter_log(
+        "Using memory of type:", Fore.GREEN, f"{memory.__class__.__name__}"
+    )
+    logger.typewriter_log("Using Browser:", Fore.GREEN, config.selenium_web_browser)
+    system_prompt = ai_config.construct_full_prompt(config)
+    if config.debug_mode:
+        logger.typewriter_log("Prompt:", Fore.GREEN, system_prompt)
+
+    agent = Agent(
+        ai_name=ai_name,
+        memory=memory,
+        next_action_count=next_action_count,
+        command_registry=ai_config.command_registry,
         system_prompt=system_prompt,
         triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
         workspace_directory=workspace_directory,
