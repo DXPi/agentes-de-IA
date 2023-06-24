@@ -1,6 +1,13 @@
 """Configuration class to store the state of bools for different scripts access."""
 import os
+from pathlib import Path
 from typing import List
+
+from colorama import Fore
+from dotenv import dotenv_values, load_dotenv, set_key, unset_key
+
+# Load environment variables from .env file
+load_dotenv()
 
 import openai
 import yaml
@@ -15,7 +22,62 @@ class Config:
     Configuration class to store the state of bools for different scripts access.
     """
 
-    def __init__(self) -> None:
+    def update_env_from_template(self):
+        """Updates a configuration file `.env` from a template file `.env.template`."""
+        # get paths to .env and .env.template files
+        env_file = Path('.env').resolve()
+        template_file = Path('.env.template').resolve()
+
+        if not template_file.is_file():
+            print("\033[31m" + "Error: \".env.template\" not found!" + "\033[0m")
+            return
+
+        if not env_file.is_file():
+            answer = input(f"File {env_file} not found. Create an empty file? (y/n) ")
+            if answer.lower() == "y":
+                env_file.touch()
+            else:
+                print("\033[31m" + "Error: \".env\" not found!" + "\033[0m")
+                return
+
+        load_dotenv(dotenv_path=str(template_file), verbose=True)
+        env_values = dotenv_values(str(env_file))
+        template_values = dotenv_values(str(template_file))
+
+        # find keys that were removed from .env.template
+        removed_keys = [key for key in env_values if key not in template_values]
+        # find values that need to be added from .env.template
+        changes = {key: value for key, value in template_values.items()
+                   if env_values.get(key, '') == '' and value != ''}
+
+        if changes or removed_keys:
+            print("Changes found in .env.template:")
+            if changes:
+                for key, value in changes.items():
+                    print(f"{key} = {value}")
+            if removed_keys:
+                print("\033[33m" + f"Removed keys from .env.template: {', '.join(removed_keys)}" + "\033[0m")
+            answer = input("Do you want to apply changes to .env? (y/n) ")
+            if answer.lower() == "y":
+                print(
+                    "\033[93m" + "Warning: You may enter a confidential information.",
+                    "Do not share this part of the log with third parties." + "\033[0m")
+                print("Enter new values for the following keys or leave empty to keep the current value:")
+                for key, value in changes.items():
+                    new_value = input(f"{key} ({value}): ")
+                    if new_value.strip():
+                        set_key(env_file, key, new_value, quote_mode="never")
+                        print(f"Updated {key} = {new_value} in {env_file}")
+                    else:
+                        set_key(env_file, key, value, quote_mode="never")
+                        print(f"Kept {key} = {value} in {env_file}")
+                for key in removed_keys:
+                    unset_key(env_file, key)
+                    print(f"Removed {key} from {env_file}")
+            else:
+                print("No changes in .env.template")
+
+    def __init__(self, run_env_setup=True) -> None:
         """Initialize the Config class"""
         self.workspace_path: str = None
         self.file_logger_path: str = None
@@ -54,6 +116,10 @@ class Config:
         else:
             self.shell_allowlist = []
 
+        if run_env_setup:
+            self.update_env_from_template()
+
+        self.selenium_web_browser = os.getenv("USE_WEB_BROWSER", "chrome")
         self.ai_settings_file = os.getenv("AI_SETTINGS_FILE", "ai_settings.yaml")
         self.prompt_settings_file = os.getenv(
             "PROMPT_SETTINGS_FILE", "prompt_settings.yaml"
@@ -61,14 +127,19 @@ class Config:
         self.fast_llm_model = os.getenv("FAST_LLM_MODEL", "gpt-3.5-turbo")
         self.smart_llm_model = os.getenv("SMART_LLM_MODEL", "gpt-3.5-turbo")
         self.embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-ada-002")
-
-        self.browse_spacy_language_model = os.getenv(
-            "BROWSE_SPACY_LANGUAGE_MODEL", "en_core_web_sm"
-        )
+        self.browse_spacy_language_model = os.getenv("BROWSE_SPACY_LANGUAGE_MODEL", "en_core_web_sm")
+        try:
+            self.browse_chunk_max_length = int(os.getenv("BROWSE_CHUNK_MAX_LENGTH", 8192))
+        except ValueError:
+            self.browse_chunk_max_length = 8192
 
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
-        self.openai_organization = os.getenv("OPENAI_ORGANIZATION")
-        self.temperature = float(os.getenv("TEMPERATURE", "0"))
+
+        try:
+            self.temperature = float(os.getenv("TEMPERATURE", "0"))
+        except ValueError:
+            self.temperature = 0
+
         self.use_azure = os.getenv("USE_AZURE") == "True"
         self.execute_local_commands = (
             os.getenv("EXECUTE_LOCAL_COMMANDS", "False") == "True"
