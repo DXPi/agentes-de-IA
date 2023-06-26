@@ -20,7 +20,7 @@ class Config:
         """Initialize the Config class"""
         self.workspace_path: str = None
         self.file_logger_path: str = None
-
+        self.ai_settings_filepath: str = None
         self.debug_mode = False
         self.continuous_mode = False
         self.continuous_limit = 0
@@ -292,6 +292,18 @@ class Config:
     def set_plugins(self, value: list) -> None:
         """Set the plugins value."""
         self.plugins = value
+
+    def set_plugins_allowlist(self, value: list) -> None:
+        """Set the plugins_allowlist value."""
+        self.plugins_allowlist = value
+
+    def set_plugins_denylist(self, value: list) -> None:
+        """Set the plugins_denylist value."""
+        self.plugins_denylist = value
+
+    def set_ai_settings_filepath(self, value: str) -> None:
+        """Set the ai_settings_filepath value."""
+        self.ai_settings_filepath = value
 
     def set_temperature(self, value: int) -> None:
         """Set the temperature value."""
