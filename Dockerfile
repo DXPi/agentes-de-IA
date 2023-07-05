@@ -21,6 +21,7 @@ ENV PIP_NO_CACHE_DIR=yes \
 
 # Install the required python packages globally
 ENV PATH="$PATH:/root/.local/bin"
+COPY requirements_pypi .
 COPY requirements.txt .
 
 # Set the entrypoint
