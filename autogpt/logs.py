@@ -47,6 +47,9 @@ class Logger(metaclass=Singleton):
         self.console_handler.setLevel(logging.DEBUG)
         self.console_handler.setFormatter(console_formatter)
 
+        self.session_logger = []
+
+
         # Info handler in activity.log
         self.file_handler = logging.FileHandler(
             os.path.join(log_dir, log_file), "a", "utf-8"
@@ -119,7 +122,17 @@ class Logger(metaclass=Singleton):
         self.typing_logger.log(
             level, content, extra={"title": title, "color": title_color}
         )
+    def clear_session(self):
+        """
+        Clear the session logger.
+        """
+        self.session_logger = []
 
+    def get_session_logs(self):
+        """
+        Get the current contents of the session logger.
+        """
+        return self.session_logger
     def debug(
         self,
         message,
@@ -154,6 +167,11 @@ class Logger(metaclass=Singleton):
         message: str = "",
         level=logging.INFO,
     ):
+        self.session_logger.append({
+            'level': level,
+            'title': title,
+            'message': message,
+        })
         if message:
             if isinstance(message, list):
                 message = " ".join(message)
