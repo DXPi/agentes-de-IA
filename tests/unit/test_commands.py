@@ -4,7 +4,9 @@ import sys
 from pathlib import Path
 
 import pytest
+from langchain.tools import ListDirectoryTool, StructuredTool
 
+from autogpt.agents.agent import Agent, execute_command
 from autogpt.models.command import Command, CommandParameter
 from autogpt.models.command_registry import CommandRegistry
 
@@ -229,3 +231,29 @@ def test_import_temp_command_file_module(tmp_path: Path):
     assert (
         registry.commands["function_based"].description == "Function-based test command"
     )
+
+
+def test_generate_from_langchain_tool_simple_function(agent: Agent):
+    def string_length(input_str: str) -> int:
+        return len(input_str)
+
+    langchain_tool = StructuredTool.from_function(
+        string_length, description="useful to get the length of a string"
+    )
+    command = Command.generate_from_langchain_tool(langchain_tool)
+    agent.command_registry.register(command)
+
+    result = execute_command(
+        command_name="string_length", arguments={"input_str": "12345"}, agent=agent
+    )
+    assert result == 5
+
+
+def test_execute_langchain_list_directory(agent: Agent):
+    command = Command.generate_from_langchain_tool(ListDirectoryTool())
+    agent.command_registry.register(command)
+
+    result = execute_command(
+        command_name="list_directory", arguments={"dir_path": "."}, agent=agent
+    )
+    assert "README.md" in result
