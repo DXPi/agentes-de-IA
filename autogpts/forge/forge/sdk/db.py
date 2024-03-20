@@ -6,7 +6,6 @@ IT IS NOT ADVISED TO USE THIS IN PRODUCTION!
 
 import datetime
 import math
-import uuid
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from sqlalchemy import (
