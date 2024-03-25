@@ -239,3 +239,28 @@ def list_folder(folder: str | Path, agent: Agent) -> list[str]:
         list[str]: A list of files found in the folder
     """
     return [str(p) for p in agent.workspace.list_files(folder)]
+
+
+@command(
+    "exists",
+    "Efficiently check if a file or path exists",
+    {
+        "entity": JSONSchema(
+            type=JSONSchema.Type.STRING,
+            description="The name or path of the entity to check for.",
+            required=True,
+        ),
+    },
+)
+@sanitize_path_arg("entity")
+def exists(entity: str | Path, agent: Agent) -> bool:
+    """Efficiently check if a file or path exists.
+
+    Args:
+        entity (str | Path): The file or path to search for
+        agent (Agent): The agent that is executing the command
+
+    Returns:
+        bool: True if the  exists, otherwise False
+    """
+    return Path(entity).exists()

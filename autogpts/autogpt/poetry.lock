@@ -2866,6 +2866,16 @@ files = [
 ]
 
 [[package]]
+name = "inputimeout"
+version = "1.0.4"
+description = "Multi platform standard input with timeout"
+optional = false
+python-versions = ">=3.4"
+files = [
+    {file = "inputimeout-1.0.4-py3-none-any.whl", hash = "sha256:f4e23d27753cfc25268eefc8d52a3edc46280ad831d226617c51882423475a43"},
+]
+
+[[package]]
 name = "ipython"
 version = "8.20.0"
 description = "IPython: Productive Interactive Computing"
@@ -5696,6 +5706,17 @@ botocore = ">=1.33.2,<2.0a.0"
 crt = ["botocore[crt] (>=1.33.2,<2.0a.0)"]
 
 [[package]]
+name = "sarge"
+version = "0.1.7.post1"
+description = "A wrapper for subprocess which provides command pipeline functionality."
+optional = false
+python-versions = "*"
+files = [
+    {file = "sarge-0.1.7.post1-py2.py3-none-any.whl", hash = "sha256:6da81592eac3fdb55708baddaf28deaad3a18f8719e3c082ea3b0405647ae72c"},
+    {file = "sarge-0.1.7.post1.tar.gz", hash = "sha256:64ff42ae6ef90acbded6318ed440ed63b31a669302fb60cf41265debea282a3d"},
+]
+
+[[package]]
 name = "selenium"
 version = "4.16.0"
 description = ""
@@ -7258,4 +7279,4 @@ benchmark = ["agbenchmark"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "9e28a0449253ec931297aa655fcd09da5e9f5d57bd73863419ce4f477018ef8a"
+content-hash = "c4671ed0cdc7c772b4f194332b1a3312ec0be31cd354c9944619862dbd1add56"
