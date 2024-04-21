@@ -81,6 +81,9 @@ class OpenAIModelName(str, enum.Enum):
     GPT4 = GPT4_ROLLING
     GPT4_32k = GPT4_ROLLING_32k
 
+    # TODO: added here for convenience, maybe better to move this somewhere else though
+    LLAMAFILE_MISTRAL_7B_INSTRUCT = "mistral-7b-instruct-v0"
+
 
 OPEN_AI_EMBEDDING_MODELS = {
     info.name: info
@@ -178,6 +181,15 @@ OPEN_AI_CHAT_MODELS = {
             completion_token_cost=0.03 / 1000,
             max_tokens=128000,
             has_function_call_api=True,
+        ),
+        ChatModelInfo(
+            name=OpenAIModelName.LLAMAFILE_MISTRAL_7B_INSTRUCT,
+            service=ModelProviderService.CHAT,
+            provider_name=ModelProviderName.LLAMAFILE,
+            prompt_token_cost=0.0,
+            completion_token_cost=0.0,
+            max_tokens=32768,
+            has_function_call_api=False,
         ),
     ]
 }
@@ -354,18 +366,15 @@ class OpenAIProvider(
         """Get the token limit for a given model."""
         return OPEN_AI_MODELS[model_name].max_tokens
 
-    @classmethod
-    def get_tokenizer(cls, model_name: OpenAIModelName) -> ModelTokenizer:
+    def get_tokenizer(self, model_name: OpenAIModelName) -> ModelTokenizer:
         return tiktoken.encoding_for_model(model_name)
 
-    @classmethod
-    def count_tokens(cls, text: str, model_name: OpenAIModelName) -> int:
-        encoding = cls.get_tokenizer(model_name)
+    def count_tokens(self, text: str, model_name: OpenAIModelName) -> int:
+        encoding = self.get_tokenizer(model_name)
         return len(encoding.encode(text))
 
-    @classmethod
     def count_message_tokens(
-        cls,
+        self,
         messages: ChatMessage | list[ChatMessage],
         model_name: OpenAIModelName,
     ) -> int:
