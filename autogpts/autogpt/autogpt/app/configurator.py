@@ -7,13 +7,10 @@ from typing import Literal, Optional
 
 import click
 from colorama import Back, Fore, Style
-
-from autogpt.config import Config
-from autogpt.config.config import GPT_3_MODEL, GPT_4_MODEL
-from autogpt.core.resource.model_providers import ModelName, MultiProvider
-from autogpt.logs.helpers import request_user_double_check
-from autogpt.memory.vector import get_supported_memory_backends
-from autogpt.utils import utils
+from forge.config.config import GPT_3_MODEL, GPT_4_MODEL, Config
+from forge.llm.providers import ModelName, MultiProvider
+from forge.logging.helpers import request_user_double_check
+from forge.utils.yaml_validator import validate_yaml_file
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +24,6 @@ async def apply_overrides_to_config(
     skip_reprompt: bool = False,
     gpt3only: bool = False,
     gpt4only: bool = False,
-    memory_type: Optional[str] = None,
     browser_name: Optional[str] = None,
     allow_downloads: bool = False,
     skip_news: bool = False,
@@ -48,7 +44,6 @@ async def apply_overrides_to_config(
         log_file_format (str): Override the format for the log file.
         gpt3only (bool): Whether to enable GPT3.5 only mode.
         gpt4only (bool): Whether to enable GPT4 only mode.
-        memory_type (str): The type of memory backend to use.
         browser_name (str): The name of the browser to use for scraping the web.
         allow_downloads (bool): Whether to allow AutoGPT to download files natively.
         skips_news (bool): Whether to suppress the output of latest news on startup.
@@ -86,20 +81,6 @@ async def apply_overrides_to_config(
         config.fast_llm = await check_model(config.fast_llm, "fast_llm")
         config.smart_llm = await check_model(config.smart_llm, "smart_llm")
 
-    if memory_type:
-        supported_memory = get_supported_memory_backends()
-        chosen = memory_type
-        if chosen not in supported_memory:
-            logger.warning(
-                extra={
-                    "title": "ONLY THE FOLLOWING MEMORY BACKENDS ARE SUPPORTED:",
-                    "title_color": Fore.RED,
-                },
-                msg=f"{supported_memory}",
-            )
-        else:
-            config.memory_backend = chosen
-
     if skip_reprompt:
         config.skip_reprompt = True
 
@@ -107,7 +88,7 @@ async def apply_overrides_to_config(
         file = ai_settings_file
 
         # Validate file
-        (validated, message) = utils.validate_yaml_file(file)
+        (validated, message) = validate_yaml_file(file)
         if not validated:
             logger.fatal(extra={"title": "FAILED FILE VALIDATION:"}, msg=message)
             request_user_double_check()
@@ -120,7 +101,7 @@ async def apply_overrides_to_config(
         file = prompt_settings_file
 
         # Validate file
-        (validated, message) = utils.validate_yaml_file(file)
+        (validated, message) = validate_yaml_file(file)
         if not validated:
             logger.fatal(extra={"title": "FAILED FILE VALIDATION:"}, msg=message)
             request_user_double_check()

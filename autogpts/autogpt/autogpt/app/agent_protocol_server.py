@@ -10,10 +10,14 @@ from fastapi import APIRouter, FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from forge.sdk.db import AgentDB
-from forge.sdk.errors import NotFoundError
-from forge.sdk.middlewares import AgentMiddleware
-from forge.sdk.model import (
+from forge.agent.agent_protocol import base_router
+from forge.agent.middlewares import AgentMiddleware
+from forge.components.event_history import ActionErrorResult, ActionSuccessResult
+from forge.config.config import Config
+from forge.database.db import AgentDB
+from forge.file_storage import FileStorage
+from forge.llm.providers import ChatModelProvider, ModelProviderBudget
+from forge.models.task import (
     Artifact,
     Step,
     StepRequestBody,
@@ -23,7 +27,8 @@ from forge.sdk.model import (
     TaskRequestBody,
     TaskStepsListResponse,
 )
-from forge.sdk.routes.agent_protocol import base_router
+from forge.utils.const import DEFAULT_ASK_COMMAND, DEFAULT_FINISH_COMMAND
+from forge.utils.exceptions import AgentFinished, NotFoundError
 from hypercorn.asyncio import serve as hypercorn_serve
 from hypercorn.config import Config as HypercornConfig
 from sentry_sdk import set_user
@@ -32,12 +37,6 @@ from autogpt.agent_factory.configurators import configure_agent_with_state
 from autogpt.agent_factory.generators import generate_agent_for_task
 from autogpt.agent_manager import AgentManager
 from autogpt.app.utils import is_port_free
-from autogpt.config import Config
-from autogpt.core.resource.model_providers import ChatModelProvider, ModelProviderBudget
-from autogpt.file_storage import FileStorage
-from autogpt.models.action_history import ActionErrorResult, ActionSuccessResult
-from autogpt.utils.exceptions import AgentFinished
-from autogpt.utils.utils import DEFAULT_ASK_COMMAND, DEFAULT_FINISH_COMMAND
 
 logger = logging.getLogger(__name__)
 

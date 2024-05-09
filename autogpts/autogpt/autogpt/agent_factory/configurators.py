@@ -1,9 +1,12 @@
 from typing import Optional
 
+from forge.config.ai_directives import AIDirectives
+from forge.config.ai_profile import AIProfile
+from forge.config.config import Config
+from forge.file_storage.base import FileStorage
+from forge.llm.providers import ChatModelProvider
+
 from autogpt.agents.agent import Agent, AgentConfiguration, AgentSettings
-from autogpt.config import AIDirectives, AIProfile, Config
-from autogpt.core.resource.model_providers import ChatModelProvider
-from autogpt.file_storage.base import FileStorage
 
 
 def create_agent(
@@ -70,8 +73,6 @@ def _configure_agent(
         directives=directives,
         app_config=app_config,
     )
-
-    # TODO: configure memory
 
     return Agent(
         settings=agent_state,
